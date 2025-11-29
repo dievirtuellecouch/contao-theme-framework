@@ -1,0 +1,74 @@
+services:
+  Richardhj\ContaoThemeFramework\EventListener\SymlinkListener:
+    tags:
+      - { name: kernel.event_listener, event: 'contao.generate_symlinks' }
+    arguments:
+      - '%kernel.project_dir%'
+      - '%contao.web_dir%'
+
+  Richardhj\ContaoThemeFramework\EventListener\LayoutDcaListener:
+    tags:
+      - { name: 'contao.callback', table: 'tl_layout', target: 'config.onload', priority: -1 }
+
+  Richardhj\ContaoThemeFramework\EventListener\ImageSizeDcaListener:
+    tags:
+      - { name: 'contao.callback', table: 'tl_image_size', target: 'config.onload', priority: -1 }
+
+  Richardhj\ContaoThemeFramework\EventListener\ImageSizeItemDcaListener:
+    tags:
+      - { name: 'contao.callback', table: 'tl_image_size_item', target: 'config.onload', priority: -1 }
+
+  Richardhj\ContaoThemeFramework\EventListener\ThemeDcaListener:
+    tags:
+      - { name: 'contao.callback', table: 'tl_theme', target: 'config.onload', priority: -1 }
+    arguments:
+      [ '@database_connection' ]
+
+  Richardhj\ContaoThemeFramework\EventListener\PageLayoutListener:
+    tags:
+      - { name: 'contao.hook', hook: getPageLayout }
+
+  Richardhj\ContaoThemeFramework\Migration\Version20Migration:
+    tags: [ { name: 'contao.migration', priority: 20 } ]
+    arguments:
+      - '@contao.twig.filesystem_loader_warmer'
+      - '%kernel.project_dir%'
+      - '@filesystem'
+
+  Richardhj\ContaoThemeFramework\Migration\ThemeMigration:
+    tags: [ 'contao.migration' ]
+    arguments:
+      - '@database_connection'
+      - '@contao.twig.filesystem_loader_warmer'
+      - '%kernel.project_dir%'
+
+  Richardhj\ContaoThemeFramework\Command\CreateThemeCommand:
+    arguments:
+      - '@filesystem'
+      - '%kernel.project_dir%'
+
+  Richardhj\ContaoThemeFramework\Twig\EncoreEntryFilesTwigExtension:
+    tags: [ 'twig.extension' ]
+    arguments:
+      - '@Richardhj\ContaoThemeFramework\Encore\EncoreEntrypointLookupCollection'
+      - '@contao.themes.tag_renderer'
+
+  Richardhj\ContaoThemeFramework\Twig\Loader\ThemeNamespace:
+    decorates: 'contao.twig.loader.theme_namespace'
+    arguments: [ '@Richardhj\ContaoThemeFramework\Twig\Loader\ThemeNamespace.inner' ]
+
+  Richardhj\ContaoThemeFramework\Encore\EncoreEntrypointLookupCollection:
+    arguments:
+      - '%contao.web_dir%'
+
+  contao.themes.tag_renderer:
+    class: Symfony\WebpackEncoreBundle\Asset\TagRenderer
+    arguments:
+      - '@Richardhj\ContaoThemeFramework\Encore\EncoreEntrypointLookupCollection'
+      - '@assets.packages'
+      - [ ]
+      - [ ]
+      - [ ]
+      - '@event_dispatcher'
+    tags:
+      - { name: 'kernel.reset', method: 'reset' }
